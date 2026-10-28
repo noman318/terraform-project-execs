@@ -12,12 +12,18 @@ Terraform project that provisions an Ubuntu EC2 instance in AWS (`ap-south-1`) i
 | `aws_route_table.RT` + `rta1` | Routes `0.0.0.0/0` through the IGW |
 | `aws_security_group.webSg` | Allows inbound HTTP (80) and SSH (22) |
 | `aws_key_pair.example` | Uploads your local `~/.ssh/id_rsa.pub` as `terraform-noman` |
-| `aws_instance.server` | `t3.micro`, Ubuntu 22.04 (`ami-082a1ff88c78c6290`) |
+| `aws_instance.server` | `t3.micro`, Ubuntu 22.04 (`ami-082a1ff88c78c6290`), tagged `Name = terraform-flask-server` |
 
 On the instance, Terraform:
 
 1. **`file` provisioner** – copies `app.py` to `/home/ubuntu/app.py`
-2. **`remote-exec` provisioner** – installs `python3-pip` and Flask, then runs the app on port 80
+2. **`remote-exec` provisioner** – installs `python3-pip` and Flask, then starts the app on port 80 in the background with `nohup` (output goes to `/home/ubuntu/app.log`)
+
+> Provisioners only run when the instance is **created**. After changing `app.py` or the provisioner commands, force a rebuild of just the instance:
+>
+> ```powershell
+> terraform apply -replace="aws_instance.server"
+> ```
 
 ## Prerequisites
 
@@ -59,6 +65,14 @@ SSH into the instance:
 ssh -i $HOME\.ssh\id_rsa ubuntu@<public-ip>
 ```
 
+On the instance, check the app:
+
+```bash
+ps aux | grep [a]pp.py      # is it running?
+curl localhost               # should print Hello, Terraform!
+cat /home/ubuntu/app.log     # Flask output and request log
+```
+
 ## Clean up
 
 ```powershell
@@ -72,4 +86,6 @@ terraform destroy
   aws ssm get-parameter --region <region> --name /aws/service/canonical/ubuntu/server/22.04/stable/current/amd64/hvm/ebs-gp2/ami-id --query Parameter.Value --output text
   ```
 - SSH is open to `0.0.0.0/0` for learning purposes — restrict it to your own IP for anything real.
+- The app is started with `nohup ... &` rather than a plain `&`. Without `nohup`, the app can be killed when Terraform closes its SSH session after provisioning. It still won't restart after a reboot — a systemd service would be needed for that.
+- During `apply` you'll see pip's *"Running pip as the 'root' user"* warning. It's harmless here: Flask installs system-wide on a throwaway instance. For real projects, use a virtualenv or `apt-get install python3-flask` instead.
 - State files (`*.tfstate`) are git-ignored since they contain resource IDs and IPs.

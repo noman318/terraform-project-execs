@@ -78,6 +78,9 @@ resource "aws_instance" "server" {
   key_name      = aws_key_pair.example.key_name
   vpc_security_group_ids = [aws_security_group.webSg.id]
   subnet_id              = aws_subnet.sub1.id
+  tags = {
+    Name = "terraform-flask-server"
+  }
 
   connection {
     type        = "ssh"
@@ -99,7 +102,8 @@ resource "aws_instance" "server" {
       "sudo apt-get install -y python3-pip",  # Example package installation
       "cd /home/ubuntu",
       "sudo pip3 install flask",
-      "sudo python3 app.py &",
+      "sudo nohup python3 app.py > app.log 2>&1 &",
+      "sleep 2",
     ]
   }
 }
