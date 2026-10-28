@@ -1,0 +1,43 @@
+# Local .terraform directories (providers, modules)
+**/.terraform/*
+
+# State files (contain resource IDs, IPs and possibly secrets)
+*.tfstate
+*.tfstate.*
+
+# Crash logs
+crash.log
+crash.*.log
+
+# Variable files (often contain secrets)
+*.tfvars
+*.tfvars.json
+
+# Override files (local-only tweaks)
+override.tf
+override.tf.json
+*_override.tf
+*_override.tf.json
+
+# Saved plans
+*.tfplan
+tfplan
+
+# CLI config
+.terraformrc
+terraform.rc
+
+# SSH keys, just in case
+*.pem
+id_rsa
+id_rsa.pub
+
+# Python
+__pycache__/
+*.pyc
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
